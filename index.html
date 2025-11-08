@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Camera Stream</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, sans-serif;
+      background: #0d1117;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    video {
+      width: 90%;
+      max-width: 600px;
+      border-radius: 16px;
+      box-shadow: 0 0 20px rgba(255,255,255,0.2);
+      background: black;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      border: none;
+      background: #007bff;
+      color: white;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <h1>📸 Live Camera Feed</h1>
+  <video id="camera" autoplay playsinline></video>
+  <button id="switch">Switch Camera</button>
+
+  <script>
+    let currentStream;
+    let useFrontCamera = true;
+
+    async function startCamera() {
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+      }
+
+      const constraints = {
+        video: {
+          facingMode: useFrontCamera ? "user" : "environment"
+        },
+        audio: false
+      };
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        currentStream = stream;
+        document.getElementById('camera').srcObject = stream;
+      } catch (err) {
+        alert('Error accessing camera: ' + err.message);
+      }
+    }
+
+    document.getElementById('switch').addEventListener('click', () => {
+      useFrontCamera = !useFrontCamera;
+      startCamera();
+    });
+
+    startCamera();
+  </script>
+</body>
+</html>
