@@ -1,0 +1,14 @@
+{
+  "name": "live-stream",
+  "version": "1.0.0",
+  "description": "A simple WebRTC live camera streaming project using Node.js and WebSockets.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "ws": "^8.17.0"
+  }
+}

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Stream Viewer</title>
+  <style>
+    body {
+      text-align: center;
+      background: #111;
+      color: #fff;
+      font-family: system-ui, sans-serif;
+    }
+    video {
+      width: 90%;
+      border-radius: 12px;
+      margin-top: 10px;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+    }
+  </style>
+</head>
+<body>
+  <h2>🎥 Live Stream Viewer</h2>
+  <p>Watch the live camera feed here.</p>
+  <video id="remoteVideo" autoplay playsinline></video>
+
+  <script>
+    const ws = new WebSocket('ws://YOUR_LOCAL_IP:8080'); // Change this to your server IP (e.g., ws://192.168.1.10:8080)
+    const pc = new RTCPeerConnection();
+    const remoteVideo = document.getElementById('remoteVideo');
+
+    pc.ontrack = event => {
+      remoteVideo.srcObject = event.streams[0];
+    };
+
+    pc.onicecandidate = event => {
+      if (event.candidate) {
+        ws.send(JSON.stringify({ type: 'candidate', candidate: event.candidate }));
+      }
+    };
+
+    ws.onopen = () => ws.send(JSON.stringify({ type: 'viewer' }));
+
+    ws.onmessage = async event => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'offer') {
+        await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        ws.send(JSON.stringify({ type: 'answer', answer }));
+      } else if (data.type === 'candidate') {
+        await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+      }
+    };
+  </script>
+</body>
+</html>

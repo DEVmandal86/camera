@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Stream Sender</title>
+  <style>
+    body {
+      text-align: center;
+      background: #111;
+      color: #fff;
+      font-family: system-ui, sans-serif;
+    }
+    video {
+      width: 90%;
+      border-radius: 12px;
+      margin-top: 10px;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+    }
+  </style>
+</head>
+<body>
+  <h2>📸 Live Stream Sender</h2>
+  <p>This page streams your camera feed to viewers.</p>
+  <video id="video" autoplay muted playsinline></video>
+
+  <script>
+    const ws = new WebSocket('ws://YOUR_LOCAL_IP:8080'); // Change this to your server IP (e.g., ws://192.168.1.10:8080)
+    const pc = new RTCPeerConnection();
+    const video = document.getElementById('video');
+
+    navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+      .then(stream => {
+        video.srcObject = stream;
+        stream.getTracks().forEach(track => pc.addTrack(track, stream));
+      });
+
+    pc.onicecandidate = event => {
+      if (event.candidate) {
+        ws.send(JSON.stringify({ type: 'candidate', candidate: event.candidate }));
+      }
+    };
+
+    ws.onopen = () => ws.send(JSON.stringify({ type: 'sender' }));
+
+    ws.onmessage = async event => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'answer') {
+        await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+      }
+    };
+
+    async function createOffer() {
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      ws.send(JSON.stringify({ type: 'offer', offer }));
+    }
+
+    setTimeout(createOffer, 2000);
+  </script>
+</body>
+</html>
